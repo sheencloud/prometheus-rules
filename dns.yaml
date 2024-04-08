@@ -11,7 +11,7 @@ spec:
     rules:
     - alert: 集群CoreDNS可用性异常-请求跌零
       expr: (sum(rate(coredns_dns_request_count_total{}[1m]))by(server,zone)<=0) or (sum(rate(coredns_dns_requests_total{}[1m]))by(server,zone)<=0)
-      for: 2m
+      for: 20m
       labels:
         namespace: monitoring
         severity: critical
