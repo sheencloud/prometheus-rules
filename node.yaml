@@ -1,0 +1,95 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: pm
+  name: nodes
+  namespace: monitoring
+spec:
+  groups:
+    - name: Node
+      rules:
+      - alert: 节点NotReady状态持续3分钟
+        expr: (sum(max_over_time(kube_node_status_condition{condition="Ready",status="true"}[3m]) <= 0) by (node)) or (absent(kube_node_status_condition{condition="Ready",status="true"})) > 0
+        for: 30s
+        labels:
+          namespace: monitoring
+          severity: critical
+          alertname: 节点NotReady状态持续3分钟
+          kind: resources
+          resource_kind: Node
+          resourceType: Node
+          source: prometheus
+        annotations:
+          summary: 节点NotReady状态持续3分钟 ({{ $labels.node }}) 
+          description: "节点NotReady状态持续3分钟 {{ $labels.node }} !"
+      - alert: 节点CPU水位高于80%
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+        for: 1m
+        labels:
+          namespace: monitoring
+          severity: warning
+          alertname: 节点CPU水位高于80%
+          kind: resources
+          resource_kind: Node
+          resourceType: Node
+          source: prometheus
+        annotations:
+          summary: 节点CPU水位高于80% ({{ $labels.instance }}) 
+          description: "节点CPU水位高于80% {{ $labels.instance }}!"
+      - alert: 节点CPU水位高于90%
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 90
+        for: 1m
+        labels:
+          namespace: monitoring
+          severity: critical
+          alertname: 节点CPU水位高于90%
+          kind: resources
+          resource_kind: Node
+          resourceType: Node
+          source: prometheus
+        annotations:
+          summary: 节点CPU水位高于90% ({{ $labels.instance }}) 
+          description: "节点CPU水位高于90% {{ $labels.instance }} "
+      - alert: 节点内存水位高于80%
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 20
+        for: 2m
+        labels:
+          namespace: monitoring
+          severity: critical
+          alertname: 节点内存水位高于80%
+          kind: resources
+          resource_kind: Node
+          resourceType: Node
+          source: prometheus
+        annotations:
+          summary: 节点内存水位高于80% ({{ $labels.instance }}) 
+          description: "节点内存水位高于80% {{ $labels.instance }} "
+      - alert: 节点内存水位高于90%
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+        for: 2m
+        labels:
+          namespace: monitoring
+          severity: critical
+          alertname: 节点内存水位高于90%
+          kind: resources
+          resource_kind: Node
+          resourceType: Node
+          source: prometheus
+        annotations:
+          summary: 节点内存水位高于90% ({{ $labels.instance }}) 
+          description: "节点内存水位高于90% {{ $labels.instance }} !"
+      - alert: 节点磁盘空间不足10%
+        expr: ((node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes) < 10
+        for: 2m
+        labels:
+          namespace: monitoring
+          severity: critical
+          alertname: 节点磁盘空间不足10%
+          kind: resources
+          resource_kind: Node
+          resourceType: Node
+          source: prometheus
+        annotations:
+          summary: 节点磁盘空间不足10% ({{ $labels.instance }})
+          description: "节点磁盘空间不足10% {{ $labels.instance }} !"

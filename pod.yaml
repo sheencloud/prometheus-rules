@@ -1,0 +1,92 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: pm
+  name: pods
+  namespace: monitoring
+spec:
+  groups:
+    - name: Pod
+      rules:
+      - alert: 内存使用超过8G
+        expr: (sum (container_memory_working_set_bytes{id!="/"})by (pod,container) /1024/1024/1024)>8
+        for: 30s
+        labels:
+          namespace: monitoring
+          severity: critical
+          alertname: 内存使用超过8G
+          kind: resources
+          resource_kind: Pod
+          resourceType: Pod
+          source: prometheus
+        annotations:
+          summary: 内存使用超过8G ({{ $labels.pod }})
+          description: "内存使用超过8G  {{ $labels.pod }} !"
+      - alert: 容器入带宽(mb)
+        expr: sum by (pod)(irate(container_network_receive_bytes_total{}[1m])) /1024/1024>10
+        for: 5m
+        labels:
+          namespace: monitoring
+          severity: critical
+          alertname: 容器入带宽(mb)
+          kind: resources
+          resource_kind: Pod
+          resourceType: Pod
+          source: prometheus
+        annotations:
+          summary: 容器入带宽(mb) ({{ $labels.pod }})
+          description: "容器入带宽(mb) {{ $labels.pod }} !"
+      - alert: 容器出带宽(mb)
+        expr: sum by (pod)(irate(container_network_transmit_bytes_total{}[1m])) /1024/1024>10
+        for: 5m
+        labels:
+          namespace: monitoring
+          severity: critical
+          alertname: 容器出带宽(mb)
+          kind: resources
+          resource_kind: Pod
+          resourceType: Pod
+          source: prometheus
+        annotations:
+          summary: 容器出带宽(mb) ({{ $labels.pod }})
+          description: "容器出带宽(mb) {{ $labels.pod }} !"
+      - alert: Pod实例OOM
+        expr: kube_pod_container_status_terminated_reason{reason="OOMKilled"} > 0
+        for: 10s
+        labels:
+          namespace: monitoring
+          severity: critical
+          kind: resources
+          resource_kind: Pod
+          resourceType: Pod
+          source: prometheus
+        annotations:
+          summary: Container实例OOM ({{ $labels.pod }})
+          description: "Container实例OOM {{ $labels.pod }} !"
+      - alert: 容器CPU限流频繁
+        expr: rate(container_cpu_cfs_throttled_seconds_total[3m]) * 100 > 25
+        for: 30s
+        labels:
+          namespace: monitoring
+          severity: critical
+          kind: resources
+          resource_kind: Pod
+          resourceType: Pod
+          source: prometheus
+        annotations:
+          summary: 容器CPU被频繁限流。最近3分钟被限流CPU时间片>25% ({{ $labels.pod }})
+          description: "容器CPU被频繁限流。最近3分钟被限流CPU时间片>25% {{ $labels.pod }} !"
+      - alert: Pod启动失败
+        expr: sum_over_time(increase(kube_pod_container_status_restarts_total{}[1m])[5m:1m]) > 3
+        for: 30s
+        labels:
+          namespace: monitoring
+          severity: critical
+          kind: resources
+          resource_kind: Pod
+          resourceType: Pod
+          source: prometheus
+        annotations:
+          summary: 最近5分钟Pod启动异常累计3次以上触发报警。 ({{ $labels.pod }})
+          description: "最近5分钟Pod启动异常累计3次以上触发报警。 {{ $labels.pod }} !"

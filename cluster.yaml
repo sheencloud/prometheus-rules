@@ -1,0 +1,39 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: pm
+  name: cluster
+  namespace: monitoring
+spec:
+  groups:
+  - name: Cluster
+    rules:
+    - alert: 集群CPU使用率超过50%
+      expr: 100 - (avg  (irate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) >= 50
+      for: 2m
+      labels:
+        namespace: monitoring
+        severity: warning
+        alertname:  集群CPU使用率超过50%
+        kind: resources
+        resource_kind: Cluster
+        resourceType: Cluster
+        source: prometheus
+      annotations:
+        info: "集群CPU实际使用率超过50%, 集群当前CPU使用率为{{ printf \"%.2f\" $value }}%"
+        description: "集群CPU实际使用率超过50%, 集群当前CPU使用率为{{ printf \"%.2f\" $value }}%"
+    - alert: 集群CPU使用率超过80%
+      expr: 100 - (avg  (irate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) >= 80
+      for: 2m
+      labels:
+        namespace: monitoring
+        severity: critical
+        alertname:  集群CPU使用率超过80%
+        kind: resources
+        resource_kind: Cluster
+        resourceType: Cluster
+        source: prometheus
+      annotations:
+        info: "集群CPU实际使用率超过80%, 集群当前CPU使用率为{{ printf \"%.2f\" $value }}%"
+        description: "集群CPU实际使用率超过80%, 集群当前CPU使用率为{{ printf \"%.2f\" $value }}%"

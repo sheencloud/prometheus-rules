@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: pm
+  name: dns
+  namespace: monitoring
+spec:
+  groups:
+  - name: Dns
+    rules:
+    - alert: 集群CoreDNS可用性异常-请求跌零
+      expr: (sum(rate(coredns_dns_request_count_total{}[1m]))by(server,zone)<=0) or (sum(rate(coredns_dns_requests_total{}[1m]))by(server,zone)<=0)
+      for: 2m
+      labels:
+        namespace: monitoring
+        severity: critical
+        alertname:  集群CoreDNS可用性异常-请求跌零
+        kind: resources
+        resource_kind: Dns
+        resourceType: Dns
+        source: prometheus
+      annotations:
+        info: "集群CoreDNS可用性异常-请求跌零"
+        description: "集群CoreDNS可用性异常-请求跌零"
